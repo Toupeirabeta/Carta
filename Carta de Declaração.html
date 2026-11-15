@@ -1,0 +1,505 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Carta de Declaração</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Jost:wght@300;400&family=Pinyon+Script&display=swap">
+<style>
+/* Layout: palco escuro, envelope de partículas no centro; a carta (HTML) fica entre duas camadas de canvas
+   para poder sair de dentro do envelope. Visual único e escuro de propósito (sem tema claro). */
+:root{
+  --bg:#12080e; --bg-glow:#2b1121;
+  --blush:#ffd6e0; --rose:#ff86a4; --seal:#ff4673; --gold:#f6dcae;
+  --paper:#fbf1ef; --paper-2:#f4e3e2; --ink:#3d2030; --ink-rose:#a3304f; --ui:#f3cbd6;
+  --f-script:'Pinyon Script','Snell Roundhand',cursive;
+  --f-hand:'Caveat','Segoe Script','Bradley Hand',cursive;
+  --f-ui:'Jost','Helvetica Neue',Arial,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+html{overflow:hidden;background:var(--bg)}
+body{
+  margin:0;box-sizing:border-box;overflow:hidden;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  background:radial-gradient(ellipse 80% 70% at 50% 46%,var(--bg-glow) 0%,var(--bg) 72%),var(--bg);
+  color:var(--ui);font-family:var(--f-ui);
+  -webkit-tap-highlight-color:transparent;
+}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#cvBack{z-index:1}
+#cvFront{z-index:3}
+#glow{
+  position:fixed;left:0;top:0;z-index:0;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,90,130,.26) 0%,rgba(255,90,130,.08) 42%,transparent 68%);
+}
+
+/* ---------- carta ---------- */
+#letterWrap{position:fixed;inset:0;z-index:2;pointer-events:none;perspective:1800px}
+#letterWrap.front{z-index:4}
+#letter{
+  position:absolute;left:0;top:0;transform-origin:0 0;transform-style:preserve-3d;visibility:hidden;
+}
+.panel{
+  position:relative;transform-style:preserve-3d;backface-visibility:hidden;
+  background:linear-gradient(180deg,var(--paper),var(--paper-2));
+  box-shadow:0 10px 30px rgba(0,0,0,.4);border-radius:3px;
+}
+.p1{position:absolute;inset:0}
+.p2,.p3{position:absolute;left:0;top:100%;width:100%;height:100%;transform-origin:50% 0}
+.panel::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.7;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .22  0 0 0 0 .28  0 0 0 .1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.p1::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(0deg,rgba(90,30,50,.12),transparent 9%)}
+.p2::after,.p3::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(90,30,50,.18),transparent 13%)}
+.txt{position:relative;z-index:1;box-sizing:border-box;height:100%;overflow:hidden;color:var(--ink);font:500 22px/1.3 var(--f-hand);transition:opacity .35s ease}
+.txt .in{position:absolute}
+.in p{margin:0 0 .55em}
+.in p:last-child{margin-bottom:0}
+.greet{font:400 1.75em/1.1 var(--f-script);color:var(--ink-rose);margin-bottom:.35em!important}
+.closing{margin-top:.7em!important}
+.sign{font:400 1.6em/1.1 var(--f-script);color:var(--ink-rose);text-align:right}
+#letterWrap.reading .txt{opacity:0}
+.panel::after{transition:opacity .4s ease}
+/* carta aberta: uma folha só, com marcas de dobra discretas no lugar dos cortes */
+#sheet{
+  position:absolute;opacity:0;transition:opacity .2s ease;pointer-events:none;border-radius:3px;
+  background:linear-gradient(180deg,var(--paper),var(--paper-2));box-shadow:0 14px 40px rgba(0,0,0,.45);
+}
+#letterWrap.sheet #sheet{opacity:1}
+#letterWrap.reading .panel{background:transparent;box-shadow:none;border-radius:0}
+#letterWrap.reading .p1::after{opacity:0}
+#letterWrap.reading .p2::after,#letterWrap.reading .p3::after{
+  background:linear-gradient(180deg,rgba(110,50,70,.16) 0,rgba(110,50,70,.16) 1px,rgba(255,255,255,.28) 1px,rgba(255,255,255,0) 5px,rgba(110,50,70,.04) 5px,rgba(110,50,70,0) 22px);
+}
+/* leitura: texto contínuo sobre a folha aberta, com rolagem quando a carta é longa */
+#read{
+  position:absolute;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
+  opacity:0;pointer-events:none;transition:opacity .35s ease;color:var(--ink);font:500 22px/1.3 var(--f-hand);
+}
+#read::-webkit-scrollbar{display:none}
+#read.on{opacity:1;pointer-events:auto}
+#read:focus-visible{outline:2px solid var(--ink-rose);outline-offset:-6px}
+#readFade{position:absolute;pointer-events:none;opacity:0;transition:opacity .3s;border-radius:0 0 3px 3px;background:linear-gradient(180deg,rgba(244,227,226,0),var(--paper-2) 85%)}
+#readFade.on{opacity:1}
+#rbar{position:absolute;width:3px;border-radius:2px;background:rgba(163,48,79,.5);pointer-events:none;opacity:0;transition:opacity .3s}
+#rbar.on{opacity:1}
+
+/* ---------- interface ---------- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#kicker{
+  position:fixed;left:0;right:0;z-index:5;top:calc(env(safe-area-inset-top,0px) + 26px);
+  padding:0 max(16px,env(safe-area-inset-left,0px));text-align:center;pointer-events:none;
+  font:400 clamp(30px,7vw,48px)/1.1 var(--f-script);color:var(--blush);
+  text-shadow:0 0 28px rgba(255,90,130,.45);opacity:0;transition:opacity 1.4s ease;
+}
+#kicker.show{opacity:1}
+.btn{
+  position:fixed;left:50%;z-index:5;transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 42px);
+  background:rgba(18,8,14,.35);border:1px solid rgba(255,214,224,.38);color:var(--ui);
+  font:300 13px/1 var(--f-ui);letter-spacing:.32em;text-transform:uppercase;white-space:nowrap;
+  padding:15px 24px 15px 28px;border-radius:999px;cursor:pointer;
+  opacity:0;pointer-events:none;transition:opacity 1s ease,border-color .3s;
+}
+.btn.show{opacity:1;pointer-events:auto}
+#hint.show{animation:pulse 2.8s ease-in-out infinite}
+.btn:hover{border-color:rgba(255,214,224,.85)}
+.btn:focus-visible{outline:2px solid var(--blush);outline-offset:4px}
+@keyframes pulse{50%{border-color:rgba(255,214,224,.85);box-shadow:0 0 26px rgba(255,90,130,.3)}}
+@media (prefers-reduced-motion:reduce){#hint.show{animation:none}}
+#foot{
+  position:fixed;left:0;right:0;z-index:5;pointer-events:none;text-align:center;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  padding:0 max(16px,env(safe-area-inset-left,0px));
+  font:300 11px/1.3 var(--f-ui);letter-spacing:.14em;color:rgba(243,203,214,.55);
+}
+</style>
+
+<div id="glow" aria-hidden="true"></div>
+<canvas id="cvBack" aria-hidden="true"></canvas>
+
+<div id="letterWrap">
+  <div id="sheet"></div>
+  <div id="letter">
+    <div class="panel p1" id="p1">
+      <div class="panel p2" id="p2">
+        <div class="panel p3" id="p3"></div>
+      </div>
+    </div>
+  </div>
+  <div id="read" tabindex="0" role="region" aria-label="Carta"></div>
+  <div id="readFade"></div>
+  <div id="rbar"></div>
+</div>
+
+<canvas id="cvFront" aria-hidden="true"></canvas>
+
+<div id="kicker">uma carta para você</div>
+<button id="hint" class="btn" type="button">toque para abrir</button>
+<button id="again" class="btn" type="button">ler de novo</button>
+<div id="status" class="sr" aria-live="polite"></div>
+<footer id="foot">Direitos reservados a Brenner Ramos ©</footer>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================  EDITE AQUI  ===================== */
+const CONFIG = {
+  kicker: 'uma carta para você',
+  hint:   'toque para abrir',
+  again:  'ler de novo'
+};
+const LETTER = {
+  greeting: "Para o amor da minha vida",
+  // um texto só, um parágrafo por item; a folha rola quando o texto passa do tamanho
+  paragraphs: [
+    "Às vezes eu paro para pensar em tudo que já vivemos juntos e parece impossível colocar mais de dez anos de história em algumas palavras. São tantos momentos, tantas lembranças, tantos dias bons e difíceis, tantos abraços, conversas, risadas e sonhos compartilhados… que, no fim, tudo que consigo pensar é em uma coisa: eu ainda escolheria você.",
+    "E escolheria de novo, todos os dias.",
+    "Eu sinto falta de você de uma maneira que é difícil explicar. Depois de tanto tempo ao seu lado, a sua presença se tornou parte de mim. Sinto saudade das pequenas coisas, da sua voz, do seu jeito, da sua companhia… até daqueles detalhes que talvez eu nunca tenha percebido o quanto eram importantes enquanto estavam perto de mim.",
+    "E, principalmente, sinto saudade de olhar para você.",
+    "Dos seus lindos olhos castanhos, que sempre tiveram um jeito de me prender sem que você precisasse dizer uma palavra. Eu poderia passar horas olhando para eles e ainda assim sentir que não seria tempo suficiente.",
+    "Sinto falta também dos seus cachinhos. Talvez você nem imagine, mas existe uma beleza tão única neles… e eu amo cada detalhe seu. Seu cabelo, seu sorriso, seu jeito de falar, suas manias, suas qualidades e até aquelas pequenas coisas que só quem convive há tantos anos consegue conhecer.",
+    "Eu amo você inteira.",
+    "E depois de mais de dez anos, o meu amor por você não é aquele amor de começo de relacionamento, que existe apenas pela novidade. É um amor que conheceu a rotina, conheceu as dificuldades, conheceu os dias bons e os dias ruins. É um amor que passou pelo tempo e continuou aqui.",
+    "Mesmo nesses sete meses em que estamos morando em casas diferentes, mesmo com a distância e com a saudade, eu continuo amando você.",
+    "E talvez essa distância tenha me feito perceber ainda mais o quanto você é importante para mim.",
+    "Eu penso muito no nosso futuro. Penso na vida que ainda quero construir ao seu lado. Penso nos lugares que ainda quero conhecer com você, nas coisas que ainda quero viver, nos momentos que ainda quero guardar na memória.",
+    "E existe um sonho que mora especialmente no meu coração:",
+    "eu quero que você seja a mãe dos nossos filhos.",
+    "Quero um dia olhar para você e perceber que aquela mulher por quem me apaixonei há tantos anos está ali, ao meu lado, construindo comigo a nossa família. Quero dividir uma casa com você, nossos planos, nossas conquistas, nossas preocupações e nossas alegrias. Quero envelhecer ao seu lado.",
+    "Quero poder olhar para trás e dizer:",
+    "“A gente conseguiu. Passamos por tudo isso e continuamos escolhendo um ao outro.”",
+    "Eu não sei se consigo encontrar palavras perfeitas para explicar o tamanho do meu amor. Talvez elas nem existam.",
+    "Mas existe uma coisa que eu sei:",
+    "eu te amo muito.",
+    "E eu sinto sua falta todos os dias.",
+    "Sinto falta de ter você perto, de poder te abraçar, de olhar para você e simplesmente saber que você está ali.",
+    "Mas eu também tenho esperança.",
+    "Porque eu acredito que essa distância é apenas uma parte da nossa história, não o final dela.",
+    "Muito em breve, eu quero que a gente esteja junto novamente. Quero poder matar toda essa saudade com um abraço demorado, olhar nos seus olhos castanhos e lembrar exatamente por que, depois de tantos anos, meu coração ainda bate tão forte por você.",
+    "E quando esse dia chegar, eu quero aproveitar cada segundo.",
+    "Quero segurar sua mão e seguir em frente com você.",
+    "Porque, depois de mais de dez anos, entre tudo que mudou, tudo que vivemos e tudo que ainda está por vir, uma coisa continua exatamente igual:",
+    "eu amo você.",
+    "E se a vida me desse a chance de voltar ao começo de tudo, sabendo de todas as dificuldades que enfrentaríamos, sabendo de todos os momentos que viveríamos…",
+    "eu escolheria você outra vez.",
+    "E outra.",
+    "E outra.",
+    "Até o fim.",
+    "Eu te amo, minha vida.",
+    "E estou contando os dias para poder estar com você novamente."
+  ],
+  closing: "Com Muito Amor",
+  signature: "Brenner <3"
+};
+/* ======================================================== */
+
+const $ = id => document.getElementById(id);
+const cvB = $('cvBack'), cvF = $('cvFront');
+const cb = cvB.getContext('2d'), cf = cvF.getContext('2d');
+const wrap = $('letterWrap'), letter = $('letter');
+const pn1 = $('p1'), pn2 = $('p2'), pn3 = $('p3'), glow = $('glow');
+const read = $('read'), readFade = $('readFade'), rbar = $('rbar'), sheet = $('sheet');
+const ui = { kicker: $('kicker'), hint: $('hint'), again: $('again'), status: $('status') };
+ui.kicker.textContent = CONFIG.kicker; ui.hint.textContent = CONFIG.hint; ui.again.textContent = CONFIG.again;
+
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TS = RM ? 0.5 : 1;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const PAL = ['#ffd6e0', '#ff86a4', '#f6dcae', '#ff4673', '#c9506f'];
+const TAU = Math.PI * 2;
+
+/* linha do tempo da abertura (ms desde o toque) */
+const T = { flap: [250, 1400], rise: [1150, 2150], zoom: [2250, 3350], unfold: [3250, 4750] };
+const seg = (e, r) => clamp((e - r[0]) / (r[1] - r[0]));
+
+/* ---------- geometria ---------- */
+let vw, vh, dpr, W, H, cx, cy, rw, pr, s0, hf;
+function layout() {
+  vw = innerWidth; vh = innerHeight; dpr = Math.min(devicePixelRatio || 1, 2);
+  for (const c of [cvB, cvF]) { c.width = Math.round(vw * dpr); c.height = Math.round(vh * dpr); }
+  cb.setTransform(dpr, 0, 0, dpr, 0, 0); cf.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const Hmax = (vh * 0.5 - 26) / 1.117;
+  W = Math.min(vw * 0.8, 440, Hmax / 0.64);
+  H = W * 0.64;
+  cx = vw / 2; cy = vh / 2;
+  rw = Math.min(vw * 0.9, 500, vh * 0.76 / 1.41);   // largura da carta aberta
+  pr = rw * 0.47;                                  // altura de cada dobra
+  s0 = 0.84 * W / rw;                              // escala da carta dobrada dentro do envelope
+  hf = pr * s0;
+  letter.style.width = rw + 'px'; letter.style.height = pr + 'px';
+}
+
+/* ---------- carta (DOM) ---------- */
+function fillContent(inn) {
+  const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = txt; return e; };
+  inn.appendChild(mk('p', 'greet', LETTER.greeting));
+  LETTER.paragraphs.forEach(t => inn.appendChild(mk('p', 'par', t)));
+  if (LETTER.closing) inn.appendChild(mk('p', 'closing', LETTER.closing));
+  if (LETTER.signature) inn.appendChild(mk('p', 'sign', LETTER.signature));
+}
+function buildLetter() {
+  // cada dobra mostra a mesma página contínua, deslocada para cima; a leitura rolável usa o mesmo layout
+  [pn1, pn2, pn3].forEach(pn => {
+    const txt = document.createElement('div'); txt.className = 'txt';
+    const inn = document.createElement('div'); inn.className = 'in';
+    fillContent(inn); txt.appendChild(inn); pn.insertBefore(txt, pn.firstChild);
+  });
+  const rin = document.createElement('div'); rin.className = 'in'; fillContent(rin); read.appendChild(rin);
+  read.addEventListener('scroll', updScroll, { passive: true });
+}
+function updScroll() {
+  const over = read.scrollHeight - read.clientHeight;
+  const has = over > 8;
+  const live = read.classList.contains('on');
+  readFade.classList.toggle('on', live && has && over - read.scrollTop > 8);
+  rbar.classList.toggle('on', has && read.classList.contains('on'));
+  if (has) {
+    const track = 3 * pr - 2 * pr * 0.1, h = Math.max(30, track * read.clientHeight / read.scrollHeight);
+    const top = (vh - 3 * pr) / 2 + pr * 0.1 + (track - h) * (read.scrollTop / over);
+    rbar.style.height = h + 'px'; rbar.style.top = top + 'px';
+  }
+}
+function fitAll() {
+  const fs = Math.max(14, Math.min(26, rw * 0.052)), padX = rw * 0.09, padY = pr * 0.12;
+  const left = (vw - rw) / 2, top = (vh - 3 * pr) / 2;
+  [pn1, pn2, pn3].forEach((pn, i) => {
+    const t = pn.firstChild, inn = t.firstChild;
+    t.style.fontSize = fs + 'px';
+    inn.style.left = padX + 'px'; inn.style.width = (rw - 2 * padX) + 'px'; inn.style.top = (padY - i * pr) + 'px';
+  });
+  read.style.cssText += ';left:' + left + 'px;top:' + top + 'px;width:' + rw + 'px;height:' + (3 * pr) + 'px;padding:' + padY + 'px ' + padX + 'px;font-size:' + fs + 'px';
+  const fh = pr * 0.35;
+  readFade.style.cssText += ';left:' + left + 'px;width:' + rw + 'px;height:' + fh + 'px;top:' + (top + 3 * pr - fh) + 'px';
+  rbar.style.left = (left + rw - 10) + 'px';
+  sheet.style.cssText += ';left:' + left + 'px;top:' + top + 'px;width:' + rw + 'px;height:' + (3 * pr) + 'px';
+  updScroll();
+}
+
+/* ---------- partículas ---------- */
+const P = [];
+function build() {
+  P.length = 0;
+  const sp = Math.max(3.8, W / 80);
+  const dens = Math.pow(W / 40, 2) * (vw < 520 ? 1.35 : 1);
+  const add = (g, nx, ny, o) => P.push({
+    g, nx, ny, x: 0, y: 0, vx: 0, vy: 0, c: o.c, s: o.s * (0.8 + Math.random() * 0.4),
+    a: o.a * (0.7 + Math.random() * 0.3), k: o.k || 0, ph: Math.random() * TAU, d: 0, seal: !!o.seal, life: 1, lifeMs: 1500
+  });
+  const line = (g, ax, ay, bx, by, o) => {
+    const n = Math.max(2, Math.round(Math.hypot((bx - ax) * W, (by - ay) * H) / sp));
+    for (let i = 0; i <= n; i++) { const t = i / n; add(g, ax + (bx - ax) * t + (Math.random() - .5) * .004, ay + (by - ay) * t + (Math.random() - .5) * .006, o); }
+  };
+  const tri = (g, a, b, c, o) => {
+    const area = 0.5 * Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) * W * H;
+    const n = Math.round(area / dens);
+    for (let i = 0; i < n; i++) {
+      let r1 = Math.random(), r2 = Math.random(); if (r1 + r2 > 1) { r1 = 1 - r1; r2 = 1 - r2; }
+      add(g, a[0] + (b[0] - a[0]) * r1 + (c[0] - a[0]) * r2, a[1] + (b[1] - a[1]) * r1 + (c[1] - a[1]) * r2, o);
+    }
+  };
+  const OUT = { c: 0, s: 1.3, a: .95, k: 1 }, FILL = { c: 1, s: 1.05, a: .5 }, LIN = { c: 4, s: 1.1, a: .5 };
+  // fundo do envelope (forro visível quando a aba abre)
+  line('B', -.5, -.5, .5, -.5, OUT);
+  tri('B', [-.5, -.5], [.5, -.5], [0, .02], LIN);
+  // frente do envelope
+  line('F', -.5, -.5, -.5, .5, OUT); line('F', .5, -.5, .5, .5, OUT); line('F', -.5, .5, .5, .5, OUT);
+  line('F', -.5, -.5, 0, .02, OUT); line('F', .5, -.5, 0, .02, OUT);
+  line('F', -.5, .5, 0, .02, OUT); line('F', .5, .5, 0, .02, OUT);
+  tri('F', [-.5, -.5], [0, .02], [-.5, .5], FILL);
+  tri('F', [.5, -.5], [0, .02], [.5, .5], FILL);
+  tri('F', [-.5, .5], [.5, .5], [0, .02], FILL);
+  // aba (gira em torno da borda de cima)
+  line('L', -.5, -.5, 0, .1, { c: 2, s: 1.3, a: .95, k: 1 }); line('L', .5, -.5, 0, .1, { c: 2, s: 1.3, a: .95, k: 1 });
+  tri('L', [-.5, -.5], [.5, -.5], [0, .1], { c: 1, s: 1.05, a: .5 });
+  // selo em formato de coração
+  for (let i = 0; i < 150;) {
+    const x = Math.random() * 2.6 - 1.3, y = Math.random() * 2.6 - 1.3;
+    if (Math.pow(x * x + y * y - 1, 3) - x * x * y * y * y <= 0) { add('L', x * .05, .03 - y * .078, { c: 3, s: 1.7, a: .98, seal: true }); i++; }
+  }
+  // poeira ambiente
+  const nd = vw < 520 ? 90 : 170;
+  for (let i = 0; i < nd; i++) P.push({
+    g: 'D', x: Math.random() * vw, y: Math.random() * vh, vx: (Math.random() - .5) * .25, vy: -.1 - Math.random() * .35,
+    c: [0, 2, 1][i % 3], s: .5 + Math.random() * 1.3, a: .15 + Math.random() * .4, ph: Math.random() * TAU, k: 0, d: 0, life: 1, lifeMs: 1
+  });
+  // as partículas do envelope começam espalhadas e chegam em ondas
+  for (const p of P) {
+    if (p.g === 'D') continue;
+    const a = Math.random() * TAU, r = Math.max(vw, vh) * (.3 + Math.random() * .5);
+    p.x = cx + Math.cos(a) * r; p.y = cy + Math.sin(a) * r * .75; p.d = Math.random() * 1400;
+  }
+}
+
+/* ---------- estado ---------- */
+let state = 'intro', tStart = performance.now(), tClick = 0, last = tStart;
+let bobSm = 1, frontMode = false, heartT = 0, sheetOn = false;
+const hearts = [], ptr = { x: -999, y: -999 };
+const lc = { b: -1, f: -1 };
+
+addEventListener('pointermove', e => { ptr.x = e.clientX; ptr.y = e.clientY; });
+addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') setTimeout(() => { ptr.x = ptr.y = -999; }, 250); });
+document.addEventListener('click', () => { if (state === 'idle') start(); });
+ui.again.addEventListener('click', e => { e.stopPropagation(); reset(); });
+
+function start() {
+  state = 'opening'; tClick = performance.now();
+  ui.kicker.classList.remove('show'); ui.hint.classList.remove('show');
+  ui.status.textContent = 'Abrindo a carta';
+  burst();
+}
+function burst() {
+  const sx = cx, sy = cy + .03 * H;
+  for (const p of P) if (p.seal) {
+    p.g = 'X'; const a = Math.atan2(p.y - sy, p.x - sx) + (Math.random() - .5) * .6, v = 2.5 + Math.random() * 6;
+    p.vx = Math.cos(a) * v; p.vy = Math.sin(a) * v - 1.2; p.life = 1; p.lifeMs = 1400 + Math.random() * 1400;
+    p.s *= .7 + Math.random() * .8; p.c = Math.random() < .5 ? 3 : 2; p.a = .95;
+  }
+  for (let i = 0; i < 70; i++) {
+    const a = Math.random() * TAU, v = 1.5 + Math.random() * 7;
+    P.push({ g: 'X', nx: 0, ny: 0, x: sx, y: sy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, c: Math.random() < .6 ? 2 : 0, s: .7 + Math.random() * 1.3, a: .95, k: 0, ph: 0, d: 0, seal: false, life: 1, lifeMs: 1000 + Math.random() * 1400 });
+  }
+}
+function setFold(u) {
+  pn2.style.transform = 'rotateX(' + (-176 * (1 - u)) + 'deg)';
+  pn3.style.transform = 'rotateX(' + (172 * (1 - u)) + 'deg)';
+}
+function reset() {
+  state = 'intro'; tStart = performance.now(); bobSm = 1; frontMode = false; sheetOn = false; hearts.length = 0; wrap.classList.remove('sheet');
+  wrap.classList.remove('front'); wrap.style.clipPath = 'none'; letter.style.visibility = 'hidden';
+  setFold(0); ui.again.classList.remove('show'); ui.status.textContent = '';
+  read.classList.remove('on'); wrap.classList.remove('reading'); readFade.classList.remove('on'); rbar.classList.remove('on'); read.scrollTop = 0;
+  build();
+}
+
+function drawP(ctx, key, p, al) {
+  ctx.globalAlpha = al;
+  if (lc[key] !== p.c) { ctx.fillStyle = PAL[p.c]; lc[key] = p.c; }
+  ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, TAU); ctx.fill();
+  if (p.k === 1) { ctx.globalAlpha = al * .16; ctx.beginPath(); ctx.arc(p.x, p.y, p.s * 3.2, 0, TAU); ctx.fill(); }
+}
+function drawHeart(ctx, x, y, s, a) {
+  ctx.globalAlpha = a; ctx.fillStyle = PAL[3]; ctx.beginPath();
+  ctx.moveTo(x, y + s * .35);
+  ctx.bezierCurveTo(x - s * 1.1, y - s * .35, x - s * .55, y - s * 1.1, x, y - s * .45);
+  ctx.bezierCurveTo(x + s * .55, y - s * 1.1, x + s * 1.1, y - s * .35, x, y + s * .35);
+  ctx.fill(); lc.b = -1;
+}
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(now - last, 40); last = now; const dtn = dt / 16.667;
+  const tI = now - tStart;
+
+  if (state === 'intro' && tI > 3300) { state = 'idle'; ui.kicker.classList.add('show'); ui.hint.classList.add('show'); }
+
+  let theta = 0, q = 0, z = 0, u = 0, e = 0;
+  if (state === 'opening' || state === 'open') {
+    e = (now - tClick) / TS;
+    theta = ease(seg(e, T.flap)) * Math.PI; q = ease(seg(e, T.rise)); z = ease(seg(e, T.zoom)); u = ease(seg(e, T.unfold));
+    if (state === 'opening' && e > T.unfold[1] + 200) { state = 'open'; ui.again.classList.add('show'); ui.status.textContent = 'Carta aberta'; read.scrollTop = 0; read.classList.add('on'); wrap.classList.add('reading'); updScroll(); }
+  }
+
+  bobSm += ((state === 'intro' || state === 'idle' ? 1 : 0) - bobSm) * .04 * dtn;
+  const bob = RM ? 0 : Math.sin(now / 1300) * 3 * bobSm;
+  const cyE = cy + bob, dropPx = z * vh * .35, envA = 1 - .85 * z;
+  const swirl = state === 'intro' && !RM ? Math.max(0, 1 - tI / 2600) : 0;
+  const rep = (state === 'idle' || state === 'open') && !RM;
+  const kBase = state === 'intro' ? .012 + .038 * clamp((tI - 1600) / 1600) : .05;
+  const bt = RM ? 0 : Math.pow(Math.max(0, Math.sin(now / 240)), 12) * (state === 'opening' || state === 'open' ? 0 : 1);
+
+  cb.clearRect(0, 0, vw, vh); cf.clearRect(0, 0, vw, vh); lc.b = lc.f = -1;
+
+  for (const p of P) {
+    if (p.g === 'D') {
+      p.x += p.vx * dtn + Math.sin(now / 1700 + p.ph) * .12; p.y += p.vy * dtn;
+      if (p.y < -10) p.y = vh + 10; if (p.y > vh + 10) p.y = -10;
+      if (p.x < -10) p.x = vw + 10; if (p.x > vw + 10) p.x = -10;
+      drawP(cb, 'b', p, p.a * (.6 + .4 * Math.sin(now / 600 + p.ph)) * clamp(tI / 1200));
+      continue;
+    }
+    if (p.g === 'X') {
+      if (p.life <= 0) continue;
+      const dm = Math.pow(.985, dtn);
+      p.vy += .05 * dtn; p.vx *= dm; p.vy *= dm; p.x += p.vx * dtn; p.y += p.vy * dtn; p.life -= dt / p.lifeMs;
+      if (p.life > 0) drawP(cf, 'f', p, p.life * p.a);
+      continue;
+    }
+    if (tI < p.d) continue;
+    const born = Math.min(1, (tI - p.d) / 700);
+    const wob = RM ? 0 : Math.sin(now / 900 + p.ph) * .9;
+    let nx = p.nx, ny = p.ny;
+    if (p.seal) { nx *= 1 + .1 * bt; ny = .03 + (ny - .03) * (1 + .1 * bt); }
+    const tx = cx + nx * W + wob * .7;
+    const ty = p.g === 'L' ? cyE - H / 2 + (ny + .5) * H * Math.cos(theta) + wob * .5 + dropPx
+                           : cyE + ny * H + wob * .5 + dropPx;
+    const k = p.g === 'L' ? .12 : kBase, damp = p.g === 'L' ? .72 : .84;
+    p.vx += (tx - p.x) * k * dtn; p.vy += (ty - p.y) * k * dtn;
+    if (swirl > 0) { const rx = p.x - cx, ry = p.y - cy; p.vx += -ry * .0035 * swirl * dtn; p.vy += rx * .0035 * swirl * dtn; }
+    if (rep) {
+      const mx = p.x - ptr.x, my = p.y - ptr.y, d2 = mx * mx + my * my;
+      if (d2 < 6400 && d2 > 1) { const d = Math.sqrt(d2), f = (1 - d / 80) * 2.4; p.vx += mx / d * f * dtn; p.vy += my / d * f * dtn; }
+    }
+    const dm = Math.pow(damp, dtn); p.vx *= dm; p.vy *= dm; p.x += p.vx * dtn; p.y += p.vy * dtn;
+
+    let al = p.a * born * envA * (.78 + .22 * Math.sin(now / 520 + p.ph * 3));
+    if (p.g === 'L') al *= .5 + .5 * Math.abs(Math.cos(theta));
+    if (p.seal && bt > 0) al = Math.min(1, al + .25 * bt);
+    if (p.g === 'B') drawP(cb, 'b', p, al);
+    else if (p.g === 'F') drawP(cf, 'f', p, al);
+    else if (theta <= Math.PI / 2) drawP(cf, 'f', p, al);
+    else drawP(cb, 'b', p, al);
+  }
+
+  /* corações que sobem depois da abertura */
+  if ((state === 'opening' && e > 3400) || state === 'open') {
+    heartT -= dt;
+    if (heartT <= 0 && hearts.length < 22) {
+      heartT = 380 + Math.random() * 500;
+      hearts.push({ x: Math.random() < .5 ? vw * (.05 + Math.random() * .25) : vw * (.7 + Math.random() * .25), y: vh + 20, vy: .5 + Math.random() * .7, s: 5 + Math.random() * 9, ph: Math.random() * TAU });
+    }
+  }
+  for (let i = hearts.length - 1; i >= 0; i--) {
+    const h = hearts[i]; h.y -= h.vy * dtn; h.x += Math.sin(now / 900 + h.ph) * .3;
+    if (h.y < -30) { hearts.splice(i, 1); continue; }
+    drawHeart(cb, h.x, h.y, h.s, Math.min(1, (vh - h.y) / 120) * Math.min(1, h.y / 120) * .5);
+  }
+
+  /* carta */
+  if (state === 'opening' || state === 'open') {
+    const top0 = cyE + H / 2 - 8 - hf, topEnd = cyE - H / 2 - 6 - hf, topFinal = (vh - 3 * pr) / 2;
+    const top = z > 0 ? topEnd + (topFinal - topEnd) * z : top0 + (topEnd - top0) * q;
+    const s = s0 + (1 - s0) * z, left = cx - rw * s / 2;
+    letter.style.transform = 'translate(' + left + 'px,' + top + 'px) scale(' + s + ')';
+    letter.style.visibility = theta > Math.PI / 2 ? 'visible' : 'hidden';
+    setFold(u);
+    if (u > .85 && !sheetOn) { sheetOn = true; wrap.classList.add('sheet'); }
+    wrap.style.perspectiveOrigin = cx + 'px ' + (top + 1.5 * pr * s) + 'px';
+    if (q < 1) {
+      const L = cx - W / 2, R = cx + W / 2, Tt = cyE - H / 2, Vy = cyE + .02 * H;
+      wrap.style.clipPath = 'polygon(0px 0px,' + vw + 'px 0px,' + vw + 'px ' + Tt + 'px,' + R + 'px ' + Tt + 'px,' + cx + 'px ' + Vy + 'px,' + L + 'px ' + Tt + 'px,0px ' + Tt + 'px)';
+    } else if (!frontMode) { wrap.style.clipPath = 'none'; wrap.classList.add('front'); frontMode = true; }
+  }
+
+  /* brilho atrás do envelope / da carta */
+  const gs = W * 1.9 * (1 - z) + rw * 1.8 * z, gy = cyE + (vh / 2 - cyE) * z;
+  glow.style.width = glow.style.height = gs + 'px';
+  glow.style.transform = 'translate(' + (cx - gs / 2) + 'px,' + (gy - gs / 2) + 'px)';
+  glow.style.opacity = clamp(tI / 1500) * (.65 + .2 * Math.sin(now / 900));
+}
+
+function onResize() { layout(); fitAll(); }
+let rz = 0;
+addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(onResize); });
+
+layout(); buildLetter(); setFold(0); fitAll(); build();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
