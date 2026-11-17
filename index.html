@@ -57,6 +57,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 .txt .in{position:absolute}
 .in p{margin:0 0 .55em}
 .in p:last-child{margin-bottom:0}
+.par{white-space:pre-line}
 .greet{font:400 1.75em/1.1 var(--f-script);color:var(--ink-rose);margin-bottom:.35em!important}
 .closing{margin-top:.7em!important}
 .sign{font:400 1.6em/1.1 var(--f-script);color:var(--ink-rose);text-align:right}
@@ -91,7 +92,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 #kicker{
   position:fixed;left:0;right:0;z-index:5;top:calc(env(safe-area-inset-top,0px) + 26px);
   padding:0 max(16px,env(safe-area-inset-left,0px));text-align:center;pointer-events:none;
-  font:400 clamp(30px,7vw,48px)/1.1 var(--f-script);color:var(--blush);
+  font:400 clamp(26px,6.4vw,48px)/1.1 var(--f-script);color:var(--blush);
   text-shadow:0 0 28px rgba(255,90,130,.45);opacity:0;transition:opacity 1.4s ease;
 }
 #kicker.show{opacity:1}
@@ -115,6 +116,51 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
   padding:0 max(16px,env(safe-area-inset-left,0px));
   font:300 11px/1.3 var(--f-ui);letter-spacing:.14em;color:rgba(243,203,214,.55);
 }
+
+/* ---------- lista de cartas ---------- */
+#hub{
+  position:fixed;inset:0;z-index:6;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:calc(env(safe-area-inset-top,0px) + 28px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 56px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  animation:hubIn .8s ease both;
+}
+@keyframes hubIn{from{opacity:0}to{opacity:1}}
+#hub[hidden]{display:none}
+.hwrap{margin:auto 0;width:100%;max-width:640px;display:flex;flex-direction:column;gap:30px}
+.hhead{text-align:center;display:flex;flex-direction:column;gap:10px}
+.hhead h1{margin:0;font:400 clamp(38px,9vw,60px)/1.05 var(--f-script);color:var(--blush);text-shadow:0 0 30px rgba(255,90,130,.45);text-wrap:balance}
+.hhead p{margin:0;font:300 14px/1.5 var(--f-ui);letter-spacing:.06em;color:rgba(243,203,214,.78)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{
+  appearance:none;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;
+  padding:22px 12px 18px;border-radius:14px;cursor:pointer;color:var(--ui);font:inherit;text-align:center;
+  background:rgba(255,214,224,.055);border:1px solid rgba(255,214,224,.26);
+  transition:transform .25s ease,border-color .25s,background .25s;
+}
+.card:hover{transform:translateY(-3px);border-color:rgba(255,214,224,.6);background:rgba(255,214,224,.09)}
+.card:focus-visible{outline:2px solid var(--blush);outline-offset:3px}
+.card .ico{width:84px;max-width:100%;height:auto;color:var(--blush)}
+.card .no{font:400 12px/1 var(--f-ui);letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.card .cap{font:400 22px/1.1 var(--f-script);color:var(--blush);min-height:2.2em;display:flex;align-items:center;justify-content:center;overflow-wrap:anywhere}
+.card.plain .cap{font:300 13px/1.2 var(--f-ui);letter-spacing:.14em;color:rgba(243,203,214,.7)}
+.card.locked{cursor:not-allowed;border-style:dashed;border-color:rgba(255,214,224,.16);background:rgba(255,214,224,.025)}
+.card.locked:hover{transform:none;border-color:rgba(255,214,224,.26);background:rgba(255,214,224,.035)}
+.card.locked .ico{color:rgba(246,220,174,.5)}
+.card.locked .no{color:rgba(246,220,174,.5)}
+.card.locked .cap{color:rgba(243,203,214,.45)}
+.card.shake{animation:shake .4s ease}
+@keyframes shake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.card.shake,#hub{animation:none}}
+#back{
+  position:fixed;z-index:7;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(14px,env(safe-area-inset-left,0px));
+  width:42px;height:42px;padding:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  background:rgba(18,8,14,.35);border:1px solid rgba(255,214,224,.32);color:var(--ui);
+  opacity:0;pointer-events:none;transition:opacity .6s ease,border-color .3s;
+}
+#back.show{opacity:1;pointer-events:auto}
+#back:hover{border-color:rgba(255,214,224,.85)}
+#back:focus-visible{outline:2px solid var(--blush);outline-offset:4px}
 </style>
 
 <div id="glow" aria-hidden="true"></div>
@@ -142,6 +188,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 <div id="status" class="sr" aria-live="polite"></div>
 <footer id="foot">Direitos reservados a Brenner Ramos ©</footer>
 
+<button id="back" type="button" aria-label="Voltar para as cartas" title="Voltar para as cartas"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+<main id="hub">
+  <div class="hwrap">
+    <header class="hhead"><h1>Cartas para você</h1><p>Novas cartas chegam com o passar dos dias.</p></header>
+    <div id="grid" class="grid"></div>
+  </div>
+</main>
+
 <script>
 (() => {
 'use strict';
@@ -152,7 +206,7 @@ const CONFIG = {
   hint:   'toque para abrir',
   again:  'ler de novo'
 };
-const LETTER = {
+const CARTA_1 = {
   greeting: "Para o amor da minha vida",
   // um texto só, um parágrafo por item; a folha rola quando o texto passa do tamanho
   paragraphs: [
@@ -195,6 +249,47 @@ const LETTER = {
   closing: "Com Muito Amor",
   signature: "Brenner <3"
 };
+
+/* Assinatura padrão: entra no fim de toda carta que tiver texto (as em branco ficam sem).
+   Para uma carta específica usar outra, preencha closing e signature dentro dela. */
+const ASSINATURA = { closing: "Com Muito Amor", signature: "Brenner <3" };
+
+/* Lista de cartas, na ordem. Para escrever uma carta, preencha os campos dela:
+   greeting (saudação), paragraphs (um parágrafo por item), closing e signature.
+   A carta com texto fica liberada sozinha; a que está vazia aparece com cadeado.
+   Para deixar uma carta aberta e em branco, sem cadeado, use blank: true. Para criar a № 7, 8, ... é só
+   copiar um bloco vazio no fim da lista. */
+const LETTERS = [
+  CARTA_1,
+  {                                                                           // № 2
+    greeting: "Carta de Saudade",
+    // cada item é uma estrofe; as quebras de linha dentro dela são mantidas
+    paragraphs: [
+    "Meu amor,\nhoje escrevo sem saber por onde começar,\nporque quando a saudade aperta,\nparece que faltam palavras para explicar.",
+    "Sinto saudade do seu olhar castanho,\ndaquele sorriso que eu acho tão bonito,\ndos seus cachinhos balançando ao vento,\ne de ter você comigo a todo momento.",
+    "Sinto saudade do seu abraço apertado,\nde estar ao seu lado, mesmo sem dizer nada,\nde ouvir sua voz, de ver seu sorriso,\ne simplesmente sentir que estava no paraíso.",
+    "Às vezes fecho os olhos para imaginar\no momento em que vou poder te encontrar.\nImagino seu rosto, seu jeito, seu olhar,\ne fico sonhando com o dia de te abraçar.",
+    "A saudade chega sem pedir licença,\ntraz consigo lembranças e esperança.\nE mesmo quando meu coração sente dor,\nele encontra conforto lembrando do nosso amor.",
+    "Eu sinto falta das coisas mais simples,\ndaquelas que talvez parecessem invisíveis:\num sorriso seu, uma conversa qualquer,\nou simplesmente estar perto de você.",
+    "E quanto mais a saudade aperta meu coração,\nmais eu tenho certeza da minha decisão:\nquero você comigo, quero você ao meu lado,\nquero viver contigo tudo que ainda não foi sonhado.",
+    "Eu sonho com nosso futuro,\ncom nosso cantinho, nosso porto seguro.\nSonho com seus olhos olhando para mim,\ne com uma vida juntos até o fim.",
+    "Quero você como mãe dos nossos filhos,\nquero dividir contigo todos os caminhos.\nQuero rir das coisas simples ao seu lado,\ne terminar cada dia com você no meu abraço.",
+    "Quero construir aquilo que a gente sonhou,\nviver tudo aquilo que ainda não começou.\nQuero estar contigo em cada amanhecer,\ne ter mil motivos para te escolher.",
+    "E quando finalmente estivermos juntos novamente,\nquero te abraçar demoradamente.\nSem pressa, sem medo, sem precisar explicar,\napenas aproveitando o privilégio de poder te abraçar.",
+    "Quero olhar nos seus olhos castanhos\ne esquecer por um instante todos os meus enganos,\nsentir seus cachinhos entre meus dedos,\ne deixar para trás todos os nossos medos.",
+    "Porque a saudade pode até machucar,\nmas também me ensina o quanto é bom amar.\nE se existe algo que eu posso afirmar,\né que meu coração ainda escolhe você para amar.",
+    "Então, quando sentir saudade também,\nlembre que existe alguém\npensando em você com todo o coração,\nesperando pelo nosso próximo capítulo,\npelo nosso abraço, pelo nosso reencontro,\npela nossa próxima emoção.",
+    "Até esse dia chegar,\neu vou continuar a te amar.\nE quando a distância finalmente acabar,\neu só quero uma coisa:\nolhar para você, sorrir e te abraçar.",
+    "Eu te amo, minha vida."
+    ],
+    closing: "",
+    signature: ""
+  },
+  { greeting: "", paragraphs: [], closing: "", signature: "" },                // № 3: cadeado até ter texto
+  { greeting: "", paragraphs: [], closing: "", signature: "" },                // № 4
+  { greeting: "", paragraphs: [], closing: "", signature: "" },                // № 5
+  { greeting: "", paragraphs: [], closing: "", signature: "" }                 // № 6
+];
 /* ======================================================== */
 
 const $ = id => document.getElementById(id);
@@ -203,6 +298,7 @@ const cb = cvB.getContext('2d'), cf = cvF.getContext('2d');
 const wrap = $('letterWrap'), letter = $('letter');
 const pn1 = $('p1'), pn2 = $('p2'), pn3 = $('p3'), glow = $('glow');
 const read = $('read'), readFade = $('readFade'), rbar = $('rbar'), sheet = $('sheet');
+const hub = $('hub'), grid = $('grid'), back = $('back');
 const ui = { kicker: $('kicker'), hint: $('hint'), again: $('again'), status: $('status') };
 ui.kicker.textContent = CONFIG.kicker; ui.hint.textContent = CONFIG.hint; ui.again.textContent = CONFIG.again;
 
@@ -235,22 +331,28 @@ function layout() {
 }
 
 /* ---------- carta (DOM) ---------- */
-function fillContent(inn) {
+function fillContent(inn, L) {
   const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = txt; return e; };
-  inn.appendChild(mk('p', 'greet', LETTER.greeting));
-  LETTER.paragraphs.forEach(t => inn.appendChild(mk('p', 'par', t)));
-  if (LETTER.closing) inn.appendChild(mk('p', 'closing', LETTER.closing));
-  if (LETTER.signature) inn.appendChild(mk('p', 'sign', LETTER.signature));
+  if (L.greeting) inn.appendChild(mk('p', 'greet', L.greeting));
+  (L.paragraphs || []).forEach(t => inn.appendChild(mk('p', 'par', t)));
+  if (hasText(L)) {
+    inn.appendChild(mk('p', 'closing', L.closing || ASSINATURA.closing));
+    inn.appendChild(mk('p', 'sign', L.signature || ASSINATURA.signature));
+  }
 }
 function buildLetter() {
   // cada dobra mostra a mesma página contínua, deslocada para cima; a leitura rolável usa o mesmo layout
   [pn1, pn2, pn3].forEach(pn => {
     const txt = document.createElement('div'); txt.className = 'txt';
     const inn = document.createElement('div'); inn.className = 'in';
-    fillContent(inn); txt.appendChild(inn); pn.insertBefore(txt, pn.firstChild);
+    txt.appendChild(inn); pn.insertBefore(txt, pn.firstChild);
   });
-  const rin = document.createElement('div'); rin.className = 'in'; fillContent(rin); read.appendChild(rin);
+  const rin = document.createElement('div'); rin.className = 'in'; read.appendChild(rin);
   read.addEventListener('scroll', updScroll, { passive: true });
+}
+function renderLetter(L) {
+  document.querySelectorAll('.in').forEach(inn => { inn.textContent = ''; fillContent(inn, L); });
+  read.scrollTop = 0;
 }
 function updScroll() {
   const over = read.scrollHeight - read.clientHeight;
@@ -336,7 +438,7 @@ function build() {
 }
 
 /* ---------- estado ---------- */
-let state = 'intro', tStart = performance.now(), tClick = 0, last = tStart;
+let state = 'hub', tStart = performance.now(), tClick = 0, last = tStart;
 let bobSm = 1, frontMode = false, heartT = 0, sheetOn = false;
 const hearts = [], ptr = { x: -999, y: -999 };
 const lc = { b: -1, f: -1 };
@@ -373,7 +475,48 @@ function reset() {
   wrap.classList.remove('front'); wrap.style.clipPath = 'none'; letter.style.visibility = 'hidden';
   setFold(0); ui.again.classList.remove('show'); ui.status.textContent = '';
   read.classList.remove('on'); wrap.classList.remove('reading'); readFade.classList.remove('on'); rbar.classList.remove('on'); read.scrollTop = 0;
+  ui.kicker.classList.remove('show'); ui.hint.classList.remove('show');
   build();
+}
+
+/* ---------- lista de cartas ---------- */
+const hasText = L => !!(L.greeting || (L.paragraphs && L.paragraphs.length));
+const isOpen = L => hasText(L) || !!L.blank;
+const SVG_ENV = '<svg class="ico" viewBox="0 0 80 56" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 5.2"><rect x="3" y="3" width="74" height="50" rx="3"/><path d="M3 3 40 30 77 3M3 53 31 28M77 53 49 28"/></g>';
+const SVG_HEART = '<path d="M40 38C29 30 32 21 40 26 48 21 51 30 40 38Z" style="fill:var(--seal)"/></svg>';
+const SVG_LOCK = '<circle cx="40" cy="30" r="14" style="fill:var(--bg)"/><path d="M34.5 29v-3.5a5.5 5.5 0 0 1 11 0V29" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="31.5" y="29" width="17" height="12.5" rx="2.5" fill="currentColor"/></svg>';
+function buildHub() {
+  grid.textContent = '';
+  LETTERS.forEach((L, i) => {
+    const open = isOpen(L), written = hasText(L);
+    const cap = written ? (L.greeting || 'Carta') : open ? 'Em branco' : 'Em breve';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'card' + (open ? '' : ' locked') + (written ? '' : ' plain');
+    if (!open) b.setAttribute('aria-disabled', 'true');
+    b.setAttribute('aria-label', 'Carta № ' + (i + 1) + ', ' + (open ? cap : 'bloqueada, ainda não foi escrita'));
+    b.innerHTML = SVG_ENV + (open ? SVG_HEART : SVG_LOCK) + '<span class="no">№ ' + (i + 1) + '</span><span class="cap"></span>';
+    b.querySelector('.cap').textContent = cap;
+    b.addEventListener('click', () => {
+      if (open) { openLetter(i); return; }
+      b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+      ui.status.textContent = 'A carta № ' + (i + 1) + ' ainda não foi escrita.';
+    });
+    grid.appendChild(b);
+  });
+}
+function openLetter(i) {
+  renderLetter(LETTERS[i]); fitAll();
+  hub.hidden = true; back.classList.add('show');
+  ui.status.textContent = '';
+  reset();
+}
+function goHub() {
+  reset(); state = 'hub';
+  ui.again.classList.remove('show'); ui.status.textContent = '';
+  back.classList.remove('show');
+  buildHub(); hub.scrollTop = 0; hub.hidden = false;
+  for (let i = 0; i < (RM ? 1 : 3); i++) spawnFloater(true);
 }
 
 function drawP(ctx, key, p, al) {
@@ -467,9 +610,10 @@ const KINDS = ['white', 'white', 'white', 'tri', 'tri', 'tri', 'pawB', 'pawG', '
 function spawnFloater(anyY) {
   const kind = KINDS[(Math.random() * KINDS.length) | 0];
   const sc = ((kind === 'white' || kind === 'tri' ? .62 : .52) + Math.random() * .3) * (vw < 520 ? .8 : 1), half = 50 * sc;
-  const ex = (state === 'opening' || state === 'open' ? rw : W) / 2 + half + 24;
+  const ex = state === 'hub' ? 320 + half + 16 : (state === 'opening' || state === 'open' ? rw : W) / 2 + half + 24;   // na lista, só nas laterais da coluna de cartas
   let x;
   if (cx - ex > 50) x = cx + (Math.random() < .5 ? -1 : 1) * (ex + Math.random() * Math.max(0, cx - ex - half - 12));
+  else if (state === 'hub') return;   // tela estreita: a lista fica limpa, sem formas por cima dos cartões
   else x = 30 + Math.random() * (vw - 60);
   floaters.push({ kind, sc, x, y: anyY ? vh * (.15 + Math.random() * .7) : vh + half + 10, vy: .6 + Math.random() * .6, amp: 8 + Math.random() * 16, sw: .6 + Math.random() * .6, ph: Math.random() * TAU, rot0: (Math.random() - .5) * .5, age: 0 });
 }
@@ -499,6 +643,7 @@ function frame(now) {
   cb.clearRect(0, 0, vw, vh); cf.clearRect(0, 0, vw, vh); lc.b = lc.f = -1;
 
   for (const p of P) {
+    if (state === 'hub' && p.g !== 'D') continue;
     if (p.g === 'D') {
       p.x += p.vx * dtn + Math.sin(now / 1700 + p.ph) * .12; p.y += p.vy * dtn;
       if (p.y < -10) p.y = vh + 10; if (p.y > vh + 10) p.y = -10;
@@ -604,7 +749,11 @@ function onResize() { layout(); fitAll(); }
 let rz = 0;
 addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(onResize); });
 
-layout(); buildLetter(); setFold(0); fitAll(); buildShapes(); build();
+back.addEventListener('click', e => { e.stopPropagation(); goHub(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && state !== 'hub') goHub(); });
+
+layout(); buildLetter(); renderLetter(LETTERS[0]); setFold(0); fitAll(); buildShapes(); build();
+goHub();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
 requestAnimationFrame(frame);
 })();
