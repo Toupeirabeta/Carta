@@ -251,7 +251,7 @@ const CARTA_1 = {
 };
 
 /* Assinatura padrão: entra no fim de toda carta que tiver texto (as em branco ficam sem).
-   Para uma carta específica usar outra, preencha closing e signature dentro dela. */
+   Para uma carta usar outra (ou só uma linha de fecho), preencha closing e/ou signature dentro dela. */
 const ASSINATURA = { closing: "Com Muito Amor", signature: "Brenner <3" };
 
 /* Lista de cartas, na ordem. Para escrever uma carta, preencha os campos dela:
@@ -285,7 +285,25 @@ const LETTERS = [
     closing: "",
     signature: ""
   },
-  { greeting: "", paragraphs: [], closing: "", signature: "" },                // № 3: cadeado até ter texto
+  {                                                                           // № 3
+    greeting: "Entre Sombras e Estrelas",
+    paragraphs: [
+    "Um poema de Gengar para sua Clefable.",
+    "Dizem que Gengar nasceu das sombras,\nonde a luz do mundo não costuma chegar.\nQue seu sorriso esconde mil mistérios,\ne que sua natureza é brincar e assustar.",
+    "Mas ninguém contou em suas histórias\nque até as sombras precisam de calor,\nque até um coração feito de mistérios\npode se render à delicadeza do amor.",
+    "Foi então que, sob um céu estrelado,\nGengar encontrou uma pequena estrela a brilhar.\nUma Clefable de encanto inexplicável,\ncom uma luz que ele jamais conseguiu ignorar.",
+    "Ela dançava entre sonhos e luar,\ncomo se o próprio céu a tivesse desenhado.\nE aquele fantasma, tão acostumado a assustar,\ndescobriu que também podia ficar encantado.",
+    "Ele, que conhecia os segredos da escuridão,\nencontrou nela a mais bonita claridade.\nEla, que parecia saída de um sonho,\ndespertou nele algo chamado felicidade.",
+    "E que coisa curiosa é o amor:\numa criatura das sombras e outra das estrelas,\ndois mundos que pareciam tão distantes,\nmas que fizeram da diferença a beleza deles.",
+    "Gengar não precisava deixar de ser sombra,\nClefable não precisava apagar seu brilho.\nPois amar talvez seja exatamente isso:\ncaminhar lado a lado, respeitando cada caminho.",
+    "E se algum dia a noite ficar mais escura,\ne as estrelas parecerem distantes do céu,\nGengar ainda procurará sua Clefable,\npois nela encontrou seu mais doce troféu.",
+    "Não importa quantas luas ainda virão,\nnem quantas estrelas deixarão de brilhar,\nhá uma coisa que nem o tempo ou a escuridão\nserão capazes de fazer Gengar esquecer ou apagar.",
+    "Pois, entre todos os mundos que poderia habitar,\nentre todas as sombras onde poderia se esconder,\nGengar descobriu que seu lugar favorito\né qualquer lugar onde possa estar com você.",
+    "E se me perguntarem o que uma sombra\npoderia querer de uma estrela tão bonita,\ndirei que ela não precisa iluminar o universo inteiro...\nBasta continuar iluminando a minha vida."
+    ],
+    closing: "— Com amor, do seu Gengar para sua Clefable. 💜",   // assinatura própria desta carta
+    signature: ""
+  },
   { greeting: "", paragraphs: [], closing: "", signature: "" },                // № 4
   { greeting: "", paragraphs: [], closing: "", signature: "" },                // № 5
   { greeting: "", paragraphs: [], closing: "", signature: "" }                 // № 6
@@ -336,8 +354,11 @@ function fillContent(inn, L) {
   if (L.greeting) inn.appendChild(mk('p', 'greet', L.greeting));
   (L.paragraphs || []).forEach(t => inn.appendChild(mk('p', 'par', t)));
   if (hasText(L)) {
-    inn.appendChild(mk('p', 'closing', L.closing || ASSINATURA.closing));
-    inn.appendChild(mk('p', 'sign', L.signature || ASSINATURA.signature));
+    // carta com fecho/assinatura próprios usa só os dela; sem nenhum, entra a assinatura padrão
+    const own = L.closing || L.signature;
+    const cl = own ? L.closing : ASSINATURA.closing, sg = own ? L.signature : ASSINATURA.signature;
+    if (cl) inn.appendChild(mk('p', 'closing', cl));
+    if (sg) inn.appendChild(mk('p', 'sign', sg));
   }
 }
 function buildLetter() {
